@@ -28,50 +28,47 @@ catch {
     }
 }
 
-### DECLARACAO DE VARIAVEIS ####
-$subscriptionID = "6469ee74-8e84-41e8-b22b-397bb86a5453" 
-$tenantID = "eec0ce79-5f0a-47b1-8f50-b917b35979b2"
-$hostpoolname = "WVD-V2-pool" 
-$rgname = "RG-WVD-V2"
-$tempo = 120 #TEMPO EM SEGUNDOS ENTRE A MENSAGEM E O DESLIGAMENTO DA VM
+### VARIABLES ####
+$subscriptionID = "YOUR-SUBSCRIPTION-ID" 
+$tenantID = "YOUR-TENANT-ID"
+$hostpoolname = "YOUR-HOSTPOOLNAME" 
+$rgname = "YOUR-RESOURCE-GROUP-WHERE-WVD-IS-INSTALLED"
+$tempo = 120 #TIME IN SECONDS TO WAIT BETWEEN MESSAGE AND USER LOGOFF ACTION
 
-### CONECTA NA AZURE ACCOUNT E TENANT
-#Select-AzSubscription -Tenant $tenantID -Subscription $subscriptionID 
-
-#PEGA A LISTA DE SESSION HOSTS
+#GET WVD SESSION HOST VM LIST
 $sessionhost = Get-AzWvdSessionHost -HostPoolName $hostpoolname -ResourceGroupName $rgname
 
-#PARA CADA SERVIDOR DA LISTA, VERIFICA AS SESSÕES, ENVIA MENSAGEM E DESLIGA A VM
+#FOR EACH SESSION HOST, GET USER SESSIONS AND TAKE ACTION
 foreach ($server in $sessionhost){
     $temp = $server.name
-    $array = $temp.Split("/") #DIVIDE O NOME DA VM
-    #LISTA AS SESSOES DE UM SESSION HOST
+    $array = $temp.Split("/") #SPLIT VM NAME
+    #LIST USER SESSIONS FROM ONE SESSION HOST VM
     $session = Get-AzWvdUserSession -HostPoolName $hostpoolname -ResourceGroupName $rgname -SessionHostName $array[1]
-    #TESTA SE TEM SESSOES CONECTADAS
+    #TEST IF SESSION HOST VM HAS USER SESSION CONNECTED
     if ($session -eq $nul)
         {
-            #SE NAO TEM SESSAO CONECTADA, DESLIGA A VM
+            #IF IT HAS NO USER SESSION, THEN SHUTDOWN THE VM
             $vmname = $array[1].Split(".")
             Write-Host $vmname[0] "Sendo Desligada"
             Stop-AzVM -Name $vmname[0] -ResourceGroupName $rgname -Force
         }
     else
         {
-            #SE TEM SESSAO, PARA CADA SESSAO ENVIA A MENSAGEM E DESCONTECTA O USUARIO
+            #IF IT HAS USER SESSION, FOR EACH USER SESSION SEND A LOGOFF MESSAGE TO THE USER, WAIT SOME TIME, DISCONNECT USER AND THEN SHUTDOWN THE VM
             foreach ($userid in $session) {
                 write-host $userid
-                #SEPARA O ID DO USUARIO
+                #SPLIT USER ID 
                 $temps = $userid.Name
                 $xid = $temps.Split("/")
                 write-host "Session ID" $xid[2]
-                #ENVIA MENSAGEM PARA O USUARIO QUE SERA DESCONECTADO - PODE SER CUSTOMIZADA
+                #SEND MESSAGE TO THE USER WARNING ABOUT SESSION LOGOFF IN X SECONDS 
                 Send-AzWvdUserSessionMessage -HostPoolName $hostpoolname -ResourceGroupName $rgname -SessionHostName $array[1] -UserSessionId $xid[2] -MessageTitle "VM Será Desligada" -MessageBody "Sua VM será desligada em 120 segundos. Salve seu trabalho e faça o logoff"
-                #AGUARDA ALGUNS SEGUNDOS ANTES DE DESCONECTAR O USUARIO
+                #WAIT X SECONDS BEFORE DISCONNECT THE USER SESSION
                 sleep $tempo
-                #DESCONECTA A SESSÃO DO USUARIO
+                #DISCONNECT USER SESSION
                 Remove-AzWvdUserSession -HostPoolName $hostpoolname -ResourceGroupName $rgname -SessionHostName $array[1] -Id $xid[2] -Force
             }
-            #DESLIGA A VM
+            #SHUTDOWN THE VIRTUAL MACHINE AFTER ALL USER SESSION WERE DISCONNECTED
             $vmname = $array[1].Split(".")
             Write-Host $vmname[0] "Sendo Desligada"
             Stop-AzVM -Name $vmname[0] -ResourceGroupName $rgname -Force
