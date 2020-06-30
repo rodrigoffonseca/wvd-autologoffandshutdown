@@ -34,6 +34,8 @@ $tenantID = "YOUR-TENANT-ID"
 $hostpoolname = "YOUR-HOSTPOOLNAME" 
 $rgname = "YOUR-RESOURCE-GROUP-WHERE-WVD-IS-INSTALLED"
 $tempo = 120 #TIME IN SECONDS TO WAIT BETWEEN MESSAGE AND USER LOGOFF ACTION
+$msgtitle = "VM Será Desligada" #message title
+$msgbody = "Sua VM será desligada em 120 segundos. Salve seu trabalho e faça o logoff" #message body
 
 #GET WVD SESSION HOST VM LIST
 $sessionhost = Get-AzWvdSessionHost -HostPoolName $hostpoolname -ResourceGroupName $rgname
@@ -62,7 +64,7 @@ foreach ($server in $sessionhost){
                 $xid = $temps.Split("/")
                 write-host "Session ID" $xid[2]
                 #SEND MESSAGE TO THE USER WARNING ABOUT SESSION LOGOFF IN X SECONDS 
-                Send-AzWvdUserSessionMessage -HostPoolName $hostpoolname -ResourceGroupName $rgname -SessionHostName $array[1] -UserSessionId $xid[2] -MessageTitle "VM Será Desligada" -MessageBody "Sua VM será desligada em 120 segundos. Salve seu trabalho e faça o logoff"
+                Send-AzWvdUserSessionMessage -HostPoolName $hostpoolname -ResourceGroupName $rgname -SessionHostName $array[1] -UserSessionId $xid[2] -MessageTitle $msgtitle -MessageBody $msgbody
                 #WAIT X SECONDS BEFORE DISCONNECT THE USER SESSION
                 sleep $tempo
                 #DISCONNECT USER SESSION
