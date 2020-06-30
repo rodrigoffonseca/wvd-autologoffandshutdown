@@ -2,6 +2,7 @@
 
 ## DISCLAIMER
 This script is provided as sample and must not be used in production environment without previous customizations and tests.
+
 **IMPORTANT:** *This script will shutdown all VMs in the WVD host pool. If you don't want to shutdown all VMs, you need to customize the script first!*
 
 ## Overview
