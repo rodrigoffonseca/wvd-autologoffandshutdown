@@ -10,6 +10,8 @@ This script is provided as sample and must not be used in production environment
 This powershell script list all WVD Virtual Machines and for each VM, it lists the connected user sessions and send a message to each user warning about session logoff. 
 After a pre-defined time, it disconnect the user session and then shutdown the VM.
 
+- The script use AZ PowerShell modules and it's prepared for Windows Virtual Desktop Spring Update 2020. To use it with previous WVD version (Fall Update 2019), you need to change the PowerShell commands.
+
 ## How to Use this template
 This script is ready to be used in Azure Automation with Azure RunAs Account created.
 Before creating Azure Automation runbook you must install the following modules on Azure Automation:
